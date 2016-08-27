@@ -51,8 +51,7 @@ export class Login {
 
             this.navCtrl.present(loginLoading);
 
-            this.authWithPasswordByWilddog(this.user.email, this.user.password, this.viewCtrl, loginLoading);
-
+            this.authWithPasswordByWilddog(this.user.email, this.user.password, loginLoading);
         }
     }
 
@@ -70,20 +69,27 @@ export class Login {
      * @param email
      * @param password
      */
-    authWithPasswordByWilddog(email:string, password:string, viewCtrl: ViewController, loginLoading: Loading) {
+    authWithPasswordByWilddog(email:string, password:string, loginLoading:Loading) {
         var ref = new Wilddog('https://plant-book.wilddogio.com');
         // Log me in
         ref.authWithPassword({
             "email": email,
             "password": password
-        }, function (error, authData) {
+        }, (error, authData) => {
             if (error) {
                 console.log('Login Failed!', error);
+                loginLoading.dismiss();
             } else {
                 console.log('Authenticated successfully with payload:', authData);
-                loginLoading.dismiss();
-                viewCtrl.dismiss();
+                var userdef = new Wilddog('https://plant-book.wilddogio.com/users/' + authData.uid);
+                userdef.child('email').set(email);
+                userdef.once("value", (data) => {
+                    loginLoading.dismiss();
+                    this.viewCtrl.dismiss(data.val());
+                });
             }
         });
     }
+
+
 }
